@@ -44,8 +44,6 @@ def run_em_def(
         "info_nodes": graph_files_path + json_conf.get("info_node_csv_file"),
     }
 
-    file_lo = open(config["log_file_name"], "w")
-
     pop = sr_pop_name
 
     name_f_freq = os.path.basename(config.get("freq_file"))
@@ -56,6 +54,7 @@ def run_em_def(
     )
     pathlib.Path(output_dir).mkdir(parents=False, exist_ok=True)
 
+    file_lo = open(config["log_file_name"], "w")
     ### em without races
     logL = -100
     algo = em_haplotypes_algo.algo(config, pop)
