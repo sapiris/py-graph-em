@@ -18,7 +18,7 @@ import multiprocessing
 # The default MP method is spawn, use "fork"
 multiprocessing.set_start_method("fork")
 
-from grim import grim
+from grim import grim, RunGrim
 
 
 # Profiler start
@@ -219,7 +219,8 @@ def run(
     therads_list = list()
     config_list = []
     for i in range(config["num_thread"]):
-        imputation = grim.impute_instance(config, graph, count_by_prob=count_by_prob)
+        imputation = RunGrim.Impute_for_em(config, graph, count_by_prob=count_by_prob)
+        #imputation = grim.impute_instance(config, graph, count_by_prob=count_by_prob)
         imputation_list.append(imputation)
         in_file = (
             in_dir
@@ -236,7 +237,7 @@ def run(
 
     for i in range(config["num_thread"]):
         t = Process(
-            target=imputation_list[i].impute_file,
+            target=imputation_list[i].impute_for_em,
             args=(
                 config_list[i],
                 plan_b,
@@ -253,13 +254,25 @@ def run(
         therads_list[i].terminate()
 
     f_out = open(config["imputation_out_hap_freq_file"], "w")
+    set_ids = set()
     for i in range(config["num_thread"]):
 
         with open(config_list[i]["imputation_out_hap_freq_file"]) as f_t_out:
             for line in f_t_out:
+                if not em_mr:
+                    line = line.split(',')
+                    line[1] = line[1].split(";")[0]
+                    line[2] = line[2].split(";")[0]
+                    set_ids.add(line[0])
+                    line = f"{line[0]},{line[1]}+{line[2]},{line[3]},{line[4]}"
+                #else:
+                #    set_ids.add(line.split(',')[0])
                 f_out.write(line)
             f_t_out.close()
             os.remove(config_list[i]["imputation_out_hap_freq_file"])
+    if not em_mr:
+        print(f"Number of donors with output from GRIMM: {len(set_ids)}")
+    f_out.close()
 
     # Profiler end
     # pr.disable()
